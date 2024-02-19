@@ -120,3 +120,70 @@ Specify the component type as `"java"` for publishing a Java library or `"versio
 Sample projects demonstrating Java library publishing and version catalog can be found at [plugin-demo](https://github.com/ani2fun/plugin-demo).
 
 For more information and updates, visit the [Maven Central Publisher Plugin](https://github.com/ani2fun/plugin-demo).
+
+
+**6. Finally to Publish your Projects to Sonatype Central**
+
+Follow these steps:
+
+Let's say you have project called `plugin-demo`, then to publish to sonatype central you need to execute task called `publishToSonatype`
+
+For example:
+```console
+./gradlew :plugin-demo:clean :plugin-demo:publishToSonatype
+```
+
+It will upload `upload.zip` file located under your build directory of gradle project.
+
+Some of the useful Tasks implemented in this plugins are:
+```console
+> ./gradlew :plugin-demo:tasks
+Publish to Sonatype Central tasks
+---------------------------------
+aggregateFiles - AggregateFilesTask will create a required temporary directory and copy all signed files to it.
+computeHash - Compute Hash of all files in a directory
+createZip - Create a zip of all files in a directory
+dropDeployment - Drop deployment using deploymentId
+getDeploymentStatus - Get deployment status using deploymentId
+publishToSonatype - Publish to Sonatype Central Repository
+signMavenArtifact - Sign all necessary files/artifacts.
+```
+
+After successfully publishing to Maven Central, you'll see a Deployment ID in the console:
+
+```console
+Deployment Response: "95a20ab9-d2f8-49ee-9101-19aba493a730"
+```
+
+To check the deployment status, use the following task:
+
+```console
+./gradlew :plugin-demo:getDeploymentStatus -PdeploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
+```
+
+You'll see the deployment response in the console:
+```console
+> Task :plugin-demo:getDeploymentStatus
+Executing 'getDeploymentStatus' task... With parameter deploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
+Deployment Response:
+{
+  "deploymentId": "1c28f4ad-4a88-4662-89e6-49a51484ffb1",
+  "deploymentName": "eu.kakde.plugindemo:samplelib:1.0.0",
+  "deploymentState": "PUBLISHED",
+  "purls": [
+    "pkg:maven/eu.kakde.plugindemo/samplelib@1.0.0?type=pom"
+  ],
+  "errors": {
+    "common": [
+      "Deployment components info not found"
+    ]
+  },
+  "cherryBomUrl": "https://sbom.sonatype.com/report/T2-1708358340-575a0a7950c749d8841712efd60107d6"
+}
+
+```
+
+If you have used `publishingType=USER_MANAGED` and wish to drop the deployment using the deployment ID, use the following task: 
+```console
+./gradlew :plugin-demo:dropDeployment -PdeploymentId=deployement-ID-XYZ
+```
