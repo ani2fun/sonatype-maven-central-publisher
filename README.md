@@ -185,5 +185,14 @@ Deployment Response:
 
 If you have used `publishingType=USER_MANAGED` and wish to drop the deployment using the deployment ID, use the following task: 
 ```bash
-./gradlew :plugin-demo:dropDeployment -PdeploymentId=deployement-ID-XYZ
+./gradlew :plugin-demo:dropDeployment -PdeploymentId=<deployement-ID>
 ```
+
+### Side note:
+You can test the plugin locally by publishing it and then importing it into the corresponding project. Run the following command to publish the plugin to your local Maven repository:
+
+```bash
+./gradlew :plugin:publishToMavenLocal
+```
+
+This command will publish the plugin to your local Maven repository, making it available for use in other projects on your machine.

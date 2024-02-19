@@ -7,6 +7,9 @@ plugins {
     id("com.gradle.plugin-publish") version "1.2.1"
 }
 
+group = "eu.kakde.gradle"
+version = "1.0.0"
+
 repositories {
     mavenLocal()
     mavenCentral()
