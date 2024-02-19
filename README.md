@@ -129,14 +129,14 @@ Follow these steps:
 Let's say you have project called `plugin-demo`, then to publish to sonatype central you need to execute task called `publishToSonatype`
 
 For example:
-```console
+```bash
 ./gradlew :plugin-demo:clean :plugin-demo:publishToSonatype
 ```
 
 It will upload `upload.zip` file located under your build directory of gradle project.
 
 Some of the useful Tasks implemented in this plugins are:
-```console
+```bash
 > ./gradlew :plugin-demo:tasks
 Publish to Sonatype Central tasks
 ---------------------------------
@@ -151,18 +151,18 @@ signMavenArtifact - Sign all necessary files/artifacts.
 
 After successfully publishing to Maven Central, you'll see a Deployment ID in the console:
 
-```console
+```bash
 Deployment Response: "95a20ab9-d2f8-49ee-9101-19aba493a730"
 ```
 
 To check the deployment status, use the following task:
 
-```console
+```bash
 ./gradlew :plugin-demo:getDeploymentStatus -PdeploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
 ```
 
 You'll see the deployment response in the console:
-```console
+```bash
 > Task :plugin-demo:getDeploymentStatus
 Executing 'getDeploymentStatus' task... With parameter deploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
 Deployment Response:
@@ -184,6 +184,6 @@ Deployment Response:
 ```
 
 If you have used `publishingType=USER_MANAGED` and wish to drop the deployment using the deployment ID, use the following task: 
-```console
+```bash
 ./gradlew :plugin-demo:dropDeployment -PdeploymentId=deployement-ID-XYZ
 ```
