@@ -1,0 +1,2 @@
+This is an example file for testing hash calculation.
+It can contain any arbitrary content.
