@@ -1,4 +1,4 @@
-# Plugin for publishing to sonatype maven central 
+# Gradle Plugin for publishing to sonatype maven central 
 
 **Maven Central Publisher Plugin**
 
