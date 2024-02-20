@@ -4,6 +4,7 @@ import eu.kakde.sonatypecentral.SonatypeCentralPublishExtension.Companion.toSona
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.plugins.catalog.VersionCatalogPlugin
 import org.gradle.api.publish.PublicationContainer
@@ -25,7 +26,7 @@ class SonatypeMavenCentralPublisherPlugin : Plugin<Project> {
         applyPlugins(project)
 
         // Configure Custom Extension
-        println("Configuring SonatypeCentralPublishExtension")
+        println("Configuring SonatypeCentralPublishExtension...")
         val customExtension = project.toSonatypeExtension()
 
         // MAIN EXECUTION
@@ -34,7 +35,8 @@ class SonatypeMavenCentralPublisherPlugin : Plugin<Project> {
 }
 
 private fun applyPlugins(project: Project) {
-    println("Applying MavenPublishPlugin, SigningPlugin and VersionCatalogPlugin Plugins")
+    println("Applying java-library, maven-publish, signing and version-catalog plugins...")
+    project.pluginManager.apply(JavaLibraryPlugin::class.java)
     project.pluginManager.apply(MavenPublishPlugin::class.java)
     project.pluginManager.apply(SigningPlugin::class.java)
     project.pluginManager.apply(VersionCatalogPlugin::class.java)
@@ -42,53 +44,79 @@ private fun applyPlugins(project: Project) {
 
 private fun execution(
     project: Project,
-    customExtension: SonatypeCentralPublishExtension,
+    extension: SonatypeCentralPublishExtension,
 ) {
-    // Configuring extensions
+    // Get Java Plugin Extension
     val javaPluginExtension = project.extensions.getByType(JavaPluginExtension::class.java)
+    // Get Publication Container via Publishing Extension
     val publicationContainer = project.extensions.getByType(PublishingExtension::class.java).publications
 
     project.afterEvaluate {
-        // Properties from custom extension
-        val groupId = customExtension.groupId.get()
-        val artifactId = customExtension.artifactId.get()
-        val version = customExtension.version.get()
-        val componentType = customExtension.componentType.get()
-        println("groupId: $groupId, artifactId: $artifactId, version: $version, componentType: $customExtension")
+        // Retrieve properties from custom extension
+        val groupId = extension.groupId.get()
+        val artifactId = extension.artifactId.get()
+        val version = extension.version.get()
+        val componentType = extension.componentType.get() // Component Type. Either "java" or "versionCatalog"
+        println("Configuring details - Group ID: $groupId, Artifact ID: $artifactId, Version: $version, Component Type: $componentType")
 
         // In-built plugin call to get javadoc and sources
         javaPluginExtension.withSourcesJar()
         javaPluginExtension.withJavadocJar()
 
-        // Software Component Either "java" or "versionCatalog"
+        // Prepare Maven Publication
+        val mavenPublication = prepareMavenPublication(extension, publicationContainer, project)
 
-        val mavenPublication = prepareMavenPublication(customExtension, publicationContainer, project)
-
-        // Signed Maven Artifact task
-        project.tasks.register("signMavenArtifact", SignMavenArtifact::class.java, componentType, mavenPublication)
-
-        // Create the necessary directory structure to aggregate publications at a specific location for the Zip task.
-        val buildDir = project.layout.buildDirectory.get().asFile.resolve("upload")
-        val namespacePath = groupId.replace('.', File.separatorChar)
-        val directoryPath = "${buildDir.path}/$namespacePath/$artifactId/$version"
-        val aggregateFiles = project.tasks.register("aggregateFiles", AggregateFiles::class.java)
-        aggregateFiles.configure {
-            it.directoryPath = directoryPath
-            it.groupId = groupId
-            it.artifactId = artifactId
-            it.version = version
-        }
-
-        // Calculate hash task
-        project.tasks.register("computeHash", ComputeHash::class.java, File(directoryPath))
-        // Archive task
-        val createZip = project.tasks.register("createZip", CreateZip::class.java)
-        createZip.configure { it.folderPath = project.layout.buildDirectory.get().asFile.resolve("upload").path }
-
-        project.tasks.register("publishToSonatype", PublishToSonatypeCentral::class.java)
-        project.tasks.register("getDeploymentStatus", GetDeploymentStatus::class.java)
-        project.tasks.register("dropDeployment", DropDeployment::class.java)
+        registerTasks(
+            project = project,
+            mavenPublication = mavenPublication,
+            componentType = componentType,
+            groupId = groupId,
+            artifactId = artifactId,
+            version = version,
+        )
     }
+}
+
+// Register tasks for the plugin
+private fun registerTasks(
+    project: Project,
+    mavenPublication: MavenPublication,
+    componentType: String?,
+    groupId: String,
+    artifactId: String,
+    version: String,
+) {
+    // Generate Maven Artifact task
+    project.tasks.register("generateMavenArtifacts", GenerateMavenArtifacts::class.java, componentType)
+    // Signed Maven Artifact task
+    project.tasks.register("signMavenArtifacts", SignMavenArtifact::class.java, mavenPublication)
+
+    // Create the necessary directory structure to aggregate publications at a specific location for the Zip task.
+    val buildDir = project.layout.buildDirectory.get().asFile.resolve("upload")
+    val namespacePath = groupId.replace('.', File.separatorChar)
+    val directoryPath = "${buildDir.path}/$namespacePath/$artifactId/$version"
+    val aggregateFiles = project.tasks.register("aggregateFiles", AggregateFiles::class.java)
+    aggregateFiles.configure {
+        it.directoryPath = directoryPath
+        it.groupId = groupId
+        it.artifactId = artifactId
+        it.version = version
+    }
+
+    // Calculate md5 and sha1 hash of all files in a given directory
+    project.tasks.register("computeHash", ComputeHash::class.java, File(directoryPath))
+    // Create a zip of all files in a given directory
+    val createZip = project.tasks.register("createZip", CreateZip::class.java)
+    createZip.configure { it.folderPath = project.layout.buildDirectory.get().asFile.resolve("upload").path }
+
+    // Publish to Sonatype Maven Central Repository
+    project.tasks.register("publishToSonatype", PublishToSonatypeCentral::class.java)
+
+    // Get the deployment status of published deployment by deploymentId
+    project.tasks.register("getDeploymentStatus", GetDeploymentStatus::class.java)
+
+    // Drop a deployment by deploymentId
+    project.tasks.register("dropDeployment", DropDeployment::class.java)
 }
 
 private fun prepareMavenPublication(
@@ -109,7 +137,7 @@ private fun prepareMavenPublication(
             publication.artifactId = artifactId
             publication.version = version
 
-            customExtension.pomConfiguration?.let {
+            customExtension.pomConfiguration.let {
                 publication.pom(it.get())
             }
 

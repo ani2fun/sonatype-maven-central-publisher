@@ -3,6 +3,7 @@ package eu.kakde.sonatypecentral.utils
 import java.io.File
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
+import java.util.Locale
 
 object HashComputation {
     fun computeAndSaveDirectoryHashes(directory: File) {
@@ -18,8 +19,11 @@ object HashComputation {
                     file,
                 )
 
-            val md5File = File(directory, "${file.name}.md5")
-            val sha1File = File(directory, "${file.name}.sha1")
+            val md5FileName = "${file.name}.${MessageDigestAlgorithm.MD5.replace("-", "").lowercase(Locale.getDefault())}"
+            val md5File = File(directory, md5FileName)
+
+            val shaFileName = "${file.name}.${MessageDigestAlgorithm.SHA_1.replace("-", "").lowercase(Locale.getDefault())}"
+            val sha1File = File(directory, shaFileName)
 
             writeContentToFile(md5File, md5Sum)
             writeContentToFile(sha1File, sha1Sum)

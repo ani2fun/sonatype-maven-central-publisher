@@ -1,9 +1,11 @@
 package eu.kakde.sonatypecentral.utils
 
 object MessageDigestAlgorithm {
-    const val MD2 = "MD2"
     const val MD5 = "MD5"
     const val SHA_1 = "SHA-1"
+
+    // TODO: Support it later following algorithms.
+    const val MD2 = "MD2"
     const val SHA_224 = "SHA-224"
     const val SHA_256 = "SHA-256"
     const val SHA_384 = "SHA-384"

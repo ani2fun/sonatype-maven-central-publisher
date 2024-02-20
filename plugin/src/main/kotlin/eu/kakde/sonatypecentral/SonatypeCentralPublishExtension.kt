@@ -20,11 +20,11 @@ open class SonatypeCentralPublishExtension
         val username: Property<String> = objectFactory.property(String::class.java)
         val password: Property<String> = objectFactory.property(String::class.java)
 
-        val pomConfiguration: Property<Action<MavenPom>>? =
+        val pomConfiguration: Property<Action<MavenPom>> =
             objectFactory.property(Action::class.java) as Property<Action<MavenPom>>
 
         fun pom(action: Action<MavenPom>) {
-            pomConfiguration?.set(action)
+            pomConfiguration.set(action)
         }
 
         var versionMappingStrategy: Action<VersionMappingStrategy>? = null
