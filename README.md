@@ -14,7 +14,7 @@ Apply the plugin in your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.0"
+    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.2"
 }
 ```
 
@@ -98,6 +98,7 @@ object Meta {
     const val ARTIFACT_ID = "samplelib"
     const val VERSION = "1.0.0"
     const val PUBLISHING_TYPE = "AUTOMATIC" // USER_MANAGED or AUTOMATIC
+    val SHA_ALGORITHMS = listOf("SHA-256", "SHA-512") // sha256 and sha512 are supported but not mandatory. Only sha1 is mandatory but it is supported by default.
     const val DESC = "GitHub Version Catalog Repository for Personal Projects based on Gradle"
     const val LICENSE = "Apache-2.0"
     const val LICENSE_URL = "https://opensource.org/licenses/Apache-2.0"

@@ -37,6 +37,7 @@ abstract class GenerateMavenArtifacts
         init {
             val commonDependencies =
                 arrayOf(
+                    "clean",
                     "javadocJar",
                     "sourcesJar",
                     "generatePomFileForMavenPublication",
@@ -158,6 +159,7 @@ abstract class ComputeHash
     @Inject
     constructor(
         @Internal val directory: File,
+        @Internal val shaAlgorithms: List<String>,
     ) : DefaultTask() {
         init {
             group = CUSTOM_TASK_GROUP
@@ -168,7 +170,8 @@ abstract class ComputeHash
         @TaskAction
         fun run() {
             println("Executing 'computeHash' Task...")
-            HashComputation.computeAndSaveDirectoryHashes(directory)
+            println("Sha algorithms used: $shaAlgorithms")
+            HashComputation.computeAndSaveDirectoryHashes(directory, shaAlgorithms)
         }
     }
 

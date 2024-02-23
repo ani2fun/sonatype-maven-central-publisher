@@ -57,6 +57,7 @@ private fun execution(
         val artifactId = extension.artifactId.get()
         val version = extension.version.get()
         val componentType = extension.componentType.get() // Component Type. Either "java" or "versionCatalog"
+        val shaAlgorithms = extension.shaAlgorithms.get()
         println("Configuring details - Group ID: $groupId, Artifact ID: $artifactId, Version: $version, Component Type: $componentType")
 
         // In-built plugin call to get javadoc and sources
@@ -73,6 +74,7 @@ private fun execution(
             groupId = groupId,
             artifactId = artifactId,
             version = version,
+            shaAlgorithms = shaAlgorithms,
         )
     }
 }
@@ -85,6 +87,7 @@ private fun registerTasks(
     groupId: String,
     artifactId: String,
     version: String,
+    shaAlgorithms: List<String>,
 ) {
     // Generate Maven Artifact task
     project.tasks.register("generateMavenArtifacts", GenerateMavenArtifacts::class.java, componentType)
@@ -104,7 +107,8 @@ private fun registerTasks(
     }
 
     // Calculate md5 and sha1 hash of all files in a given directory
-    project.tasks.register("computeHash", ComputeHash::class.java, File(directoryPath))
+    project.tasks.register("computeHash", ComputeHash::class.java, File(directoryPath), shaAlgorithms)
+
     // Create a zip of all files in a given directory
     val createZip = project.tasks.register("createZip", CreateZip::class.java)
     createZip.configure { it.folderPath = project.layout.buildDirectory.get().asFile.resolve("upload").path }

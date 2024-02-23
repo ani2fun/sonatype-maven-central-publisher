@@ -3,6 +3,7 @@ package eu.kakde.sonatypecentral
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.publish.VersionMappingStrategy
 import org.gradle.api.publish.maven.MavenPom
@@ -16,6 +17,7 @@ open class SonatypeCentralPublishExtension
         val version: Property<String> = objectFactory.property(String::class.java)
         val publishingType: Property<String> = objectFactory.property(String::class.java)
         val componentType: Property<String> = objectFactory.property(String::class.java)
+        val shaAlgorithms: ListProperty<String> = objectFactory.listProperty(String::class.java)
 
         val username: Property<String> = objectFactory.property(String::class.java)
         val password: Property<String> = objectFactory.property(String::class.java)
