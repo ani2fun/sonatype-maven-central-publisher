@@ -6,6 +6,10 @@ This plugin automates the necessary tasks involved in preparing and publishing a
 
 You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring Boot application publishing** at [plugin-demo](https://github.com/ani2fun/plugin-demo).
 
+> [!NOTE]
+> This project serves as a temporary solution. Looking ahead, more efficient solutions will be arriving, either through direct enhancements from platform developers or Gradle engineers.
+> This project presents a valuable opportunity to learn Gradle plugin development
+
 Follow these steps to integrate and configure the plugin for your project:
 
 ## 1. Apply the Plugin
