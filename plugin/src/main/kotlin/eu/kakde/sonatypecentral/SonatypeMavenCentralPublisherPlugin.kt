@@ -15,7 +15,6 @@ import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.plugins.signing.SigningPlugin
 import java.io.File
-import java.util.Locale
 
 const val CUSTOM_TASK_GROUP = "Publish to Sonatype Central"
 const val HYPHEN_CHARACTER = "-"
@@ -177,13 +176,21 @@ private fun initJarTasks(
 
     val jarTaskConfigs =
         when (componentType) {
-            "java" -> commonJarTaskConfig + JarTaskConfig("jar", artifactId, version)
+            "java" -> {
+                val additionalTask =
+                    if (project.hasProperty("bootJar")) {
+                        JarTaskConfig("bootJar", artifactId, version)
+                    } else {
+                        JarTaskConfig("jar", artifactId, version)
+                    }
+                commonJarTaskConfig + additionalTask
+            }
+
             "versionCatalog" -> commonJarTaskConfig
             else -> emptyList()
         }
 
     jarTaskConfigs.forEach { config ->
-
         val taskName = config.taskName
         val task: Jar? = project.tasks.findByName(taskName) as? Jar
 
@@ -191,12 +198,13 @@ private fun initJarTasks(
             with(it) {
                 group = CUSTOM_TASK_GROUP
                 description = "The task is about $taskName."
+
+                val fileName = archiveFileName.get()
                 val archiveSuffix: String =
-                    if (taskName != "jar") {
-                        val cleanName = taskName.removeSuffix("Jar").lowercase(Locale.getDefault())
-                        "$HYPHEN_CHARACTER$cleanName.jar"
-                    } else {
-                        ".jar"
+                    when {
+                        fileName.endsWith("-sources.jar") -> "-sources.jar"
+                        fileName.endsWith("-javadoc.jar") -> "-javadoc.jar"
+                        else -> ".jar"
                     }
                 it.archiveFileName.set("$artifactId$HYPHEN_CHARACTER$version$archiveSuffix")
             }

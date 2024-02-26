@@ -44,12 +44,14 @@ abstract class GenerateMavenArtifacts
                     "generateMetadataFileForMavenPublication",
                 )
 
-            val dependencies =
-                if (componentType == "versionCatalog") {
-                    commonDependencies
-                } else {
-                    arrayOf("jar") + commonDependencies
+            val additionalDependencies =
+                when {
+                    componentType == "versionCatalog" -> emptyArray()
+                    project.hasProperty("bootJar") -> arrayOf("bootJar")
+                    else -> arrayOf("jar")
                 }
+
+            val dependencies = additionalDependencies + commonDependencies
 
             this.dependsOn(*dependencies)
 
@@ -115,17 +117,23 @@ abstract class AggregateFiles : DefaultTask() {
         val buildDirectory = project.layout.buildDirectory
 
         // Add all files from the libs directory
-        filesToAggregate.addAll(buildDirectory.dir("libs").get().asFileTree.files)
+        val libsDir = buildDirectory.dir("libs").get().asFileTree
+        // Todo: improve this code. Remove generation of plain jar file in publication.
+        val filesToAdd =
+            libsDir.files.filter { file ->
+                !file.name.endsWith("-plain.jar") && !file.name.endsWith("-plain.jar.asc")
+            }
+        filesToAggregate.addAll(filesToAdd)
 
         // Rename and Add all files from the publications/maven directory, e.g. pom-default.xml and pom-default.xml.asc
         val mavenPublicationsDir = buildDirectory.dir("publications/maven").orNull
         mavenPublicationsDir?.asFileTree?.forEach { file: File ->
             val newName =
-                when (file.name) {
-                    "pom-default.xml" -> "$artifactId-$version.pom"
-                    "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
-                    "module.json" -> "$artifactId-$version.module.json"
-                    "module.json.asc" -> "$artifactId-$version.module.json.asc"
+                when {
+                    file.name == "pom-default.xml" -> "$artifactId-$version.pom"
+                    file.name == "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
+                    file.name == "module.json" -> "$artifactId-$version.module.json"
+                    file.name == "module.json.asc" -> "$artifactId-$version.module.json.asc"
                     else -> "$artifactId-$version.${file.name}"
                 }
             filesToAggregate.addLast(renameFile(file, newName))

@@ -4,7 +4,7 @@
 The Maven Central Publisher Plugin is a Gradle plugin designed to streamline the process of publishing artifacts to Maven Central. Currently, it supports publishing Java libraries and gradle version catalog files.
 This plugin automates the necessary tasks involved in preparing and publishing artifacts, ensuring a smooth and efficient workflow for developers.
 
-Sample projects demonstrating Java library publishing and version catalog can be found at [plugin-demo](https://github.com/ani2fun/plugin-demo).
+You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring Boot application publishing** at [plugin-demo](https://github.com/ani2fun/plugin-demo).
 
 Follow these steps to integrate and configure the plugin for your project:
 
@@ -14,7 +14,7 @@ Apply the plugin in your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.2"
+    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.3"
 }
 ```
 
