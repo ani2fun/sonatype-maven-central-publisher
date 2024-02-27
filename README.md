@@ -8,8 +8,7 @@ efficient workflow for developers.
 **Sample projects illustrating the publishing of Java libraries, version catalogs, and Spring Boot applications using this plugin can be accessed at: https://github.com/ani2fun/plugin-demo**
 
 > [!NOTE]
-> This project serves as a temporary solution. As a Gradle user, at the time, I found a gap in available plugins for my
-> custom use case.
+> This project serves as a temporary solution. As a Gradle user, I found a gap in the existing plugins suited to my requirements at the time.
 > It encourage me to develop a custom solution to publish various artifacts to sonatype central repository, which
 > includes Java libraries and Spring Boot applications and Gradle Version-Catalog.
 > Looking ahead, more efficient solutions will be arriving, either through direct enhancements from platform developers
