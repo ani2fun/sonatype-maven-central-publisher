@@ -64,7 +64,8 @@ The sample configuration block in `build.gradle.kts` appears as follows:
 // ------------------------------------
 // PUBLISHING TO SONATYPE CONFIGURATION
 // ------------------------------------
-object Meta { val COMPONENT_TYPE = "java" // "java" or "versionCatalog"
+object Meta { 
+  val COMPONENT_TYPE = "java" // "java" or "versionCatalog"
   val GROUP = "eu.kakde.plugindemo"
   val ARTIFACT_ID = "samplelib"
   val VERSION = "1.0.0"
