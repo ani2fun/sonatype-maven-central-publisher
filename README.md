@@ -33,14 +33,19 @@ information on signing publication for Gradle [here](https://docs.gradle.org/cur
 Below is sample configuration for `gradle.properties` file:
 
 ```properties
-###
-signing.keyId=ABCDEFGH
-signing.password=your_password
-signing.secretKeyRingFile=/Users/johndoe/.gnupg/secring.gpg
-###
-sonatypeUsername=your_sonatype_username
-sonatypePassword=your_sonatype_password
-###
+##############################
+# GPG Credentials
+# Last 8 characters in your GPG public key
+signing.keyId=<ABCD1234>
+# Your signing passphrase
+signing.password=<gpg_passphrase>
+# private key secring.gpg file path: /Users/jondoe/.gnupg/secring.gpg
+signing.secretKeyRingFile=<file_path>
+
+# sonatype credentials
+sonatypeUsername=<username>
+sonatypePassword=<password>
+##############################
 ```
 
 Please note that the GPG configuration format mentioned above is utilized for testing the publication to the new Maven Central repository, covering the following artifacts:
