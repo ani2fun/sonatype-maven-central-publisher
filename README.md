@@ -1,13 +1,20 @@
 # Gradle Plugin for publishing to [central sonatype maven repository](https://central.sonatype.com/)
 
+The Maven Central Publisher Plugin is a Gradle plugin designed to streamline the process of publishing artifacts to
+Maven Central. Currently, it supports publishing Java libraries and gradle version catalog files.
+This plugin automates the necessary tasks involved in preparing and publishing artifacts, ensuring a smooth and
+efficient workflow for developers.
 
-The Maven Central Publisher Plugin is a Gradle plugin designed to streamline the process of publishing artifacts to Maven Central. Currently, it supports publishing Java libraries and gradle version catalog files.
-This plugin automates the necessary tasks involved in preparing and publishing artifacts, ensuring a smooth and efficient workflow for developers.
-
-You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring Boot application publishing** at [plugin-demo](https://github.com/ani2fun/plugin-demo).
+You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring
+Boot application publishing** at [plugin-demo](https://github.com/ani2fun/plugin-demo).
 
 > [!NOTE]
-> This project serves as a temporary solution. Looking ahead, more efficient solutions will be arriving, either through direct enhancements from platform developers or Gradle engineers.
+> This project serves as a temporary solution. As a Gradle user, at the time, I found a gap in available plugins for my
+> custom use case.
+> It encourage me to develop a custom solution to publish various artifacts to sonatype central repository, which
+> includes Java libraries and Spring Boot applications and Gradle Version-Catalog.
+> Looking ahead, more efficient solutions will be arriving, either through direct enhancements from platform developers
+> or Gradle engineers.
 > This project presents a valuable opportunity to learn Gradle plugin development
 
 Follow these steps to integrate and configure the plugin for your project:
@@ -24,7 +31,8 @@ plugins {
 
 ## 2. Configure GPG Signing
 
-Ensure that GPG signing is correctly configured for your project using the Gradle signing extension. You can find more information on signing publication for Gradle [here](https://docs.gradle.org/current/userguide/signing_plugin.html).
+Ensure that GPG signing is correctly configured for your project using the Gradle signing extension. You can find more
+information on signing publication for Gradle [here](https://docs.gradle.org/current/userguide/signing_plugin.html).
 
 Below is sample configuration for `gradle.properties` file:
 
@@ -39,13 +47,16 @@ sonatypePassword=your_sonatype_password
 ###
 ```
 
-Please note that the provided GPG configuration is utilized for testing the publication of [samplelib](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplelib/) and [samplecatalog](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplecatalog/) to new Maven Central.
+Please note that the provided GPG configuration is utilized for testing the publication
+of [samplelib](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplelib/)
+and [samplecatalog](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplecatalog/) to new Maven Central.
 
 ## 3. Configure Publication
 
 Add the `sonatypeCentralPublishExtension` to configure the publication:
 
-> **Note:** Specify the component type as `"java"` for publishing a Java library or `"versionCatalog"` for publishing a version catalog.
+> **Note:** Specify the component type as `"java"` for publishing a Java library or `"versionCatalog"` for publishing a
+> version catalog.
 
 The sample configuration block in `build.gradle.kts` appears as follows:
 
@@ -60,11 +71,11 @@ sonatypeCentralPublishExtension {
     version.set(Meta.VERSION)
     componentType.set(Meta.COMPONENT_TYPE) // "java" or "versionCatalog"
     publishingType.set(Meta.PUBLISHING_TYPE) // USER_MANAGED or AUTOMATIC
-    
+
     // Set username and password for Sonatype repository
     username.set(System.getenv("SONATYPE_USERNAME") ?: sonatypeUsername)
     password.set(System.getenv("SONATYPE_PASSWORD") ?: sonatypePassword)
-    
+
     // Configure POM metadata
     pom {
         name.set(Meta.ARTIFACT_ID)
@@ -102,7 +113,10 @@ object Meta {
     const val ARTIFACT_ID = "samplelib"
     const val VERSION = "1.0.0"
     const val PUBLISHING_TYPE = "AUTOMATIC" // USER_MANAGED or AUTOMATIC
-    val SHA_ALGORITHMS = listOf("SHA-256", "SHA-512") // sha256 and sha512 are supported but not mandatory. Only sha1 is mandatory but it is supported by default.
+    val SHA_ALGORITHMS = listOf(
+        "SHA-256",
+        "SHA-512"
+    ) // sha256 and sha512 are supported but not mandatory. Only sha1 is mandatory but it is supported by default.
     const val DESC = "GitHub Version Catalog Repository for Personal Projects based on Gradle"
     const val LICENSE = "Apache-2.0"
     const val LICENSE_URL = "https://opensource.org/licenses/Apache-2.0"
@@ -119,22 +133,27 @@ object Meta {
 
 Follow these steps:
 
-- Let's say you have project called `plugin-demo`, then to publish to sonatype central you need to execute task called `publishToSonatype`
+- Let's say you have project called `plugin-demo`, then to publish to sonatype central you need to execute task
+  called `publishToSonatype`
 
-    For example:
+  For example:
     ```bash
     ./gradlew :plugin-demo:clean :plugin-demo:publishToSonatype
     ```
 
-  It will generate a publication in the build directory of your project and create a zip file named upload.zip. This file will be published to Maven Central. If you have utilized the "USER_MANAGED" option in `sonatypeCentralPublishExtension` block, please navigate to your deployment in your Maven account and click "publish" to finalize the publication process
+  It will generate a publication in the build directory of your project and create a zip file named upload.zip. This
+  file will be published to Maven Central. If you have utilized the "USER_MANAGED" option
+  in `sonatypeCentralPublishExtension` block, please navigate to your deployment in your Maven account and click "
+  publish" to finalize the publication process
 
-- After publishing to Maven Central, you'll see a Deployment ID in the console or the error message if something goes wrong:
-    Success message:
+- After publishing to Maven Central, you'll see a Deployment ID in the console or the error message if something goes
+  wrong:
+  Success message:
     ```console
     Deployment Response: "95a20ab9-d2f8-49ee-9101-19aba493a730"
     ```
-    OR
-    Error message:
+  OR
+  Error message:
     ```console
      > Task :plugin:publishToSonatype
      Executing 'publishToSonatypeCentral' tasks...
@@ -148,6 +167,7 @@ Follow these steps:
   ```
 
 You'll see the deployment response in the console:
+
   ```console
   > Task :plugin-demo:getDeploymentStatus
   Executing 'getDeploymentStatus' task... With parameter deploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
@@ -168,7 +188,8 @@ You'll see the deployment response in the console:
   }
   ```
 
-- If you have used `publishingType=USER_MANAGED` and you wish to drop the deployment using the deployment ID, use the following task: 
+- If you have used `publishingType=USER_MANAGED` and you wish to drop the deployment using the deployment ID, use the
+  following task:
   ```bash
   ./gradlew :plugin-demo:dropDeployment -PdeploymentId=<deployement-ID>
   ```
@@ -190,10 +211,13 @@ You'll see the deployment response in the console:
     ```
 
 ### Side note:
-You can test the plugin locally by publishing it and then importing it into the corresponding project. Run the following command to publish the plugin to your local Maven repository:
+
+You can test the plugin locally by publishing it and then importing it into the corresponding project. Run the following
+command to publish the plugin to your local Maven repository:
 
 ```bash
 ./gradlew :plugin:publishToMavenLocal
 ```
 
-This command will publish the plugin to your local Maven repository, making it available for use in other projects on your local environment using the same way as in `1.Apply the Plugin` section.
+This command will publish the plugin to your local Maven repository, making it available for use in other projects on
+your local environment using the same way as in `1.Apply the Plugin` section.
