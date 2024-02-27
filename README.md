@@ -5,8 +5,7 @@ Maven Central. Currently, it supports publishing Java libraries and gradle versi
 This plugin automates the necessary tasks involved in preparing and publishing artifacts, ensuring a smooth and
 efficient workflow for developers.
 
-You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring
-Boot application publishing** at: **https://github.com/ani2fun/plugin-demo**
+**Sample projects illustrating the publishing of Java libraries, version catalogs, and Spring Boot applications using this plugin can be accessed at: https://github.com/ani2fun/plugin-demo**
 
 > [!NOTE]
 > This project serves as a temporary solution. As a Gradle user, at the time, I found a gap in available plugins for my
