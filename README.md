@@ -6,7 +6,7 @@ This plugin automates the necessary tasks involved in preparing and publishing a
 efficient workflow for developers.
 
 You can find sample projects demonstrating **Java library publishing**, **version catalog publishing**, and **Spring
-Boot application publishing** at [plugin-demo](https://github.com/ani2fun/plugin-demo).
+Boot application publishing** at: **https://github.com/ani2fun/plugin-demo**
 
 > [!NOTE]
 > This project serves as a temporary solution. As a Gradle user, at the time, I found a gap in available plugins for my
@@ -47,16 +47,17 @@ sonatypePassword=your_sonatype_password
 ###
 ```
 
-Please note that the provided GPG configuration is utilized for testing the publication
-of [samplelib](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplelib/)
-and [samplecatalog](https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplecatalog/) to new Maven Central.
+Please note that the GPG configuration format mentioned above is utilized for testing the publication to the new Maven Central repository, covering the following artifacts:
+- **Example Java library:    https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplelib/**
+- **Example Version Catalog: https://repo1.maven.org/maven2/eu/kakde/plugindemo/samplecatalog/**
+- **Example SpringBoot App:  https://repo1.maven.org/maven2/eu/kakde/plugindemo/springbootapp/**
 
 ## 3. Configure Publication
 
 Add the `sonatypeCentralPublishExtension` to configure the publication:
 
-> **Note:** Specify the component type as `"java"` for publishing a Java library or `"versionCatalog"` for publishing a
-> version catalog.
+> [!NOTE]
+> Specify the component type as "java" for publishing Java artifacts (which includes Java libraries or Spring Boot applications), or "versionCatalog" for publishing a version catalog.
 
 The sample configuration block in `build.gradle.kts` appears as follows:
 
@@ -129,7 +130,7 @@ sonatypeCentralPublishExtension {
 
 ```
 
-## 5. Finally to Publish your Projects to Sonatype Central
+## 5. Finally, to Publish your Projects to Sonatype Central
 
 Follow these steps:
 
