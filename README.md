@@ -140,7 +140,7 @@ Follow these steps:
 
   For example:
     ```bash
-    ./gradlew :plugin-demo:clean :plugin-demo:publishToSonatype
+    ./gradlew :plugin-demo:publishToSonatype
     ```
 
   It will generate a publication in the build directory of your project and create a zip file named upload.zip. This
