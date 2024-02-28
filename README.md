@@ -21,7 +21,7 @@ Apply the plugin in your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.3"
+    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.4"
 }
 ```
 
@@ -150,16 +150,18 @@ Follow these steps:
 
 - After publishing to Maven Central, you'll see a Deployment ID in the console or the error message if something goes
   wrong:
-  Success message:
+  - Success message:
     ```console
-    Deployment Response: "95a20ab9-d2f8-49ee-9101-19aba493a730"
+    Published to Maven central. Deployment ID:
+    "8dad65c2-8f66-4585-bb1e-20a8f19e22fd"
     ```
-  OR
-  Error message:
+  - Error message:
     ```console
      > Task :plugin:publishToSonatype
      Executing 'publishToSonatypeCentral' tasks...
-     Cannot publish to Maven Central (status='400'). Deployment ID='{"error":{"message":"Wrong token"}}'
+     Cannot publish to Maven Central
+     HTTP Status Code: 400
+     Error Message: "Wrong token"
     ```
 
 - To check the deployment status, use the following task:
@@ -171,23 +173,21 @@ Follow these steps:
 You'll see the deployment response in the console:
 
   ```console
-  > Task :plugin-demo:getDeploymentStatus
-  Executing 'getDeploymentStatus' task... With parameter deploymentId=1c28f4ad-4a88-4662-89e6-49a51484ffb1
-  Deployment Response:
-  {
-    "deploymentId": "1c28f4ad-4a88-4662-89e6-49a51484ffb1",
-    "deploymentName": "eu.kakde.plugindemo:samplelib:1.0.0",
-    "deploymentState": "PUBLISHED",
-    "purls": [
-      "pkg:maven/eu.kakde.plugindemo/samplelib@1.0.0?type=pom"
-    ],
-    "errors": {
-      "common": [
-        "Deployment components info not found"
-      ]
-    },
-    "cherryBomUrl": "https://sbom.sonatype.com/report/T2-1708358340-575a0a7950c749d8841712efd60107d6"
-  }
+    > Task :plugin-demo:getDeploymentStatus
+    
+    Executing 'getDeploymentStatus' task... With parameter deploymentId=8dad65c2-8f66-4585-bb1e-20a8f19e22fd
+    Deployment Status:
+    {
+      "deploymentId": "8dad65c2-8f66-4585-bb1e-20a8f19e22fd",
+      "deploymentName": "eu.kakde.plugindemo:samplelib:1.0.3",
+      "deploymentState": "PENDING",
+      "purls": [],
+      "errors": {
+        "common": [
+          "Deployment components info not found"
+        ]
+      }
+    }
   ```
 
 - If you have used `publishingType=USER_MANAGED` and you wish to drop the deployment using the deployment ID, use the

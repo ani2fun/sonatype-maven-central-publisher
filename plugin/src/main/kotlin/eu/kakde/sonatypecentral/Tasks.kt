@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import okio.IOException
 import org.gradle.api.DefaultTask
@@ -155,7 +156,6 @@ abstract class AggregateFiles : DefaultTask() {
 
         val tempDirFile = createDirectoryStructure(directoryPath)
         filesToAggregate.forEach { file ->
-            println(file.name)
             tempDirFile.let {
                 file.copyTo(it.resolve(file.name), overwrite = true)
             }
@@ -252,24 +252,13 @@ abstract class PublishToSonatypeCentral : DefaultTask() {
                 .url(url)
                 .build()
 
-        val client =
-            OkHttpClient.Builder()
-                .addInterceptor(
-                    HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.HEADERS
-                    },
-                )
-                .build()
-
+        val client = createHttpClient()
         val response = client.newCall(request).execute()
-        val responseBody = response.body?.string()
-        if (!response.isSuccessful) {
-            println("Cannot publish to Maven Central (status='${response.code}'). Deployment ID='$responseBody'")
-        } else {
-            val gson = GsonBuilder().setPrettyPrinting().create()
-            val jsonResponse = gson.toJson(responseBody)
-            println("Deployment Response: $jsonResponse")
-        }
+        handleResponse(
+            response,
+            successMessage = "Published to Maven central. Deployment ID:",
+            failureMessage = "Cannot publish to Maven Central.",
+        )
     }
 }
 
@@ -303,23 +292,13 @@ abstract class GetDeploymentStatus : DefaultTask() {
                 .url("${ENDPOINT.STATUS}?id=$deploymentId")
                 .build()
 
-        val client =
-            OkHttpClient.Builder()
-                .addInterceptor(
-                    HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.HEADERS
-                    },
-                )
-                .build()
-
+        val client = createHttpClient()
         val response = client.newCall(request).execute()
-        val responseBody = response.body?.string()
-
-        if (!response.isSuccessful) {
-            println("Failed to get deployment status (status='${response.code}'). Response: $responseBody")
-        } else {
-            println("Deployment Response:\n$responseBody")
-        }
+        handleResponse(
+            response,
+            successMessage = "Deployment Status:",
+            failureMessage = "Failed to get deployment status.",
+        )
     }
 }
 
@@ -351,22 +330,40 @@ abstract class DropDeployment : DefaultTask() {
                 .url("${ENDPOINT.DEPLOYMENT}/$deploymentId")
                 .build()
 
-        val client =
-            OkHttpClient.Builder()
-                .addInterceptor(
-                    HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.HEADERS
-                    },
-                )
-                .build()
-
+        val client = createHttpClient()
         val response = client.newCall(request).execute()
-        val responseBody = response.body?.string()
-
-        if (!response.isSuccessful) {
-            println("Failed to get deployment status (status='${response.code}'). Response: $responseBody")
-        } else {
-            println("Deployment Dropped Successfully for deploymentId=$deploymentId")
-        }
+        handleResponse(response, "Deployment Dropped Successfully for Deployment ID: $deploymentId", "Failed to drop the deployment.")
     }
 }
+
+private fun createHttpClient(): OkHttpClient {
+    return OkHttpClient.Builder()
+        .addInterceptor(
+            HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.HEADERS
+            },
+        )
+        .build()
+}
+
+private fun handleResponse(
+    response: Response,
+    successMessage: String,
+    failureMessage: String,
+) {
+    val responseBody = response.body?.string()
+    val gson = GsonBuilder().setPrettyPrinting().create()
+    if (!response.isSuccessful) {
+        val statusCode = response.code
+        val errorMessage = gson.fromJson(responseBody, ErrorMessage::class.java) ?: ErrorMessage(Error("Unknown Error: $responseBody"))
+        println("$failureMessage\nHTTP Status Code: $statusCode\nError Message: ${errorMessage.error.message}")
+    } else {
+        val jsonObject = gson.fromJson(responseBody, Any::class.java)
+        val prettyJsonString = gson.toJson(jsonObject)
+        println("$successMessage\n$prettyJsonString")
+    }
+}
+
+data class ErrorMessage(val error: Error)
+
+data class Error(val message: String)
