@@ -133,8 +133,8 @@ abstract class AggregateFiles : DefaultTask() {
                 when {
                     file.name == "pom-default.xml" -> "$artifactId-$version.pom"
                     file.name == "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
-                    file.name == "module.json" -> "$artifactId-$version.module.json"
-                    file.name == "module.json.asc" -> "$artifactId-$version.module.json.asc"
+                    file.name == "module.json" -> "$artifactId-$version.module"
+                    file.name == "module.json.asc" -> "$artifactId-$version.module.asc"
                     else -> "$artifactId-$version.${file.name}"
                 }
             filesToAggregate.addLast(renameFile(file, newName))
@@ -146,8 +146,8 @@ abstract class AggregateFiles : DefaultTask() {
             val fileName = file.name
             val newName =
                 when {
-                    fileName.endsWith("versions.toml") -> "$artifactId-$version.versions.toml"
-                    fileName.endsWith("versions.toml.asc") -> "$artifactId-$version.versions.toml.asc"
+                    fileName.endsWith("versions.toml") -> "$artifactId-$version.toml"
+                    fileName.endsWith("versions.toml.asc") -> "$artifactId-$version.toml.asc"
                     else -> fileName
                 }
 
