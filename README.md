@@ -21,7 +21,7 @@ Apply the plugin in your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.4"
+    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.5"
 }
 ```
 
