@@ -1,7 +1,7 @@
 # Gradle Plugin for publishing to [central sonatype maven repository](https://central.sonatype.com/)
 
 The Maven Central Publisher Plugin is a Gradle plugin designed to streamline the process of publishing artifacts to
-Maven Central repository. Currently, it supports publishing Java libraries, gradle version catalog files and spring boot application.
+Maven Central repository. Currently, it supports publishing Java Libraries, Gradle Version Catalog files and Spring Boot Application.
 
 **Sample projects illustrating the publishing of Java libraries, version catalogs, and Spring Boot applications using this plugin can be accessed at: https://github.com/ani2fun/plugin-demo**
 

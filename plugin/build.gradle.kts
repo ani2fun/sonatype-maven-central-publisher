@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.jvm)
     `java-gradle-plugin`
@@ -8,12 +10,24 @@ plugins {
 }
 
 group = "eu.kakde.gradle"
-version = "1.0.5"
+version = "1.0.6"
 
 repositories {
     mavenLocal()
     mavenCentral()
     gradlePluginPortal()
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+    }
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
