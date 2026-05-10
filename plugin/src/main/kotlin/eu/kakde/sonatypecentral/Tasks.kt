@@ -6,7 +6,8 @@ import eu.kakde.sonatypecentral.api.Credentials
 import eu.kakde.sonatypecentral.api.OkHttpSonatypeCentralClient
 import eu.kakde.sonatypecentral.api.PublishingType
 import eu.kakde.sonatypecentral.api.SonatypeCentralClient
-import eu.kakde.sonatypecentral.utils.HashComputation
+import eu.kakde.sonatypecentral.utils.HashUtils
+import eu.kakde.sonatypecentral.utils.MessageDigestAlgorithm
 import eu.kakde.sonatypecentral.utils.ZipUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.maven.MavenPublication
@@ -18,6 +19,7 @@ import org.gradle.plugins.signing.SigningExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermissions
+import java.security.MessageDigest
 import java.util.Locale
 import javax.inject.Inject
 
@@ -191,9 +193,24 @@ abstract class ComputeHash
         @TaskAction
         fun run() {
             println("Executing 'computeHash' Task...")
-            println("Sha algorithms used: $shaAlgorithms")
-            HashComputation.computeAndSaveDirectoryHashes(directory, shaAlgorithms)
+            // Maven Central requires MD5 + SHA-1 alongside any user-requested
+            // algorithms. Deduplicate so a user who already lists SHA-1 doesn't
+            // produce two .sha1 files.
+            val effectiveAlgorithms =
+                (listOf(MessageDigestAlgorithm.MD5, MessageDigestAlgorithm.SHA_1) + shaAlgorithms).toSet()
+            println("Hash algorithms used: $effectiveAlgorithms")
+            directory.listFiles { _, name -> !name.endsWith(".asc") }?.forEach { file ->
+                effectiveAlgorithms.forEach { algorithm ->
+                    val digest = MessageDigest.getInstance(algorithm)
+                    val checksum = HashUtils.getCheckSumFromFile(digest, file)
+                    val checksumFile = File(directory, "${file.name}.${fileSuffixFor(algorithm)}")
+                    checksumFile.writeText(checksum)
+                }
+            }
         }
+
+        private fun fileSuffixFor(algorithm: String): String =
+            algorithm.replace("-", "").lowercase(Locale.ROOT)
     }
 
 abstract class CreateZip : DefaultTask() {
