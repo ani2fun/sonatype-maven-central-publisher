@@ -1,5 +1,7 @@
 package eu.kakde.sonatypecentral
 
+import eu.kakde.sonatypecentral.api.ArtifactCoordinates
+import eu.kakde.sonatypecentral.api.BundleLayout
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -19,10 +21,17 @@ class ComputeHashTest {
         // Pre-existing .asc files must be skipped (they're signatures, not artifacts).
         File(staging, "lib.jar.asc").writeText("signature")
 
+        val layout =
+            BundleLayout(
+                uploadRootDirectory = staging,
+                stagingDirectory = staging,
+                zipFile = File(tempDir.toFile(), "upload.zip"),
+                coordinates = ArtifactCoordinates("g", "lib", "1.0"),
+            )
         val project = ProjectBuilder.builder().build()
         val task =
             project.tasks
-                .register("computeHash", ComputeHash::class.java, staging, listOf("SHA-256"))
+                .register("computeHash", ComputeHash::class.java, layout, listOf("SHA-256"))
                 .get()
 
         task.run()
@@ -47,10 +56,17 @@ class ComputeHashTest {
         val staging = tempDir.toFile()
         File(staging, "lib.jar").writeText("hello world")
 
+        val layout =
+            BundleLayout(
+                uploadRootDirectory = staging,
+                stagingDirectory = staging,
+                zipFile = File(tempDir.toFile(), "upload.zip"),
+                coordinates = ArtifactCoordinates("g", "lib", "1.0"),
+            )
         val project = ProjectBuilder.builder().build()
         val task =
             project.tasks
-                .register("computeHash", ComputeHash::class.java, staging, listOf("SHA-1", "SHA-256"))
+                .register("computeHash", ComputeHash::class.java, layout, listOf("SHA-1", "SHA-256"))
                 .get()
 
         task.run()

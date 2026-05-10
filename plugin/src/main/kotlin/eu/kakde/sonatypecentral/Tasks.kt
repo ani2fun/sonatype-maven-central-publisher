@@ -1,7 +1,7 @@
 package eu.kakde.sonatypecentral
 
 import com.google.gson.GsonBuilder
-import eu.kakde.sonatypecentral.api.ArtifactCoordinates
+import eu.kakde.sonatypecentral.api.BundleLayout
 import eu.kakde.sonatypecentral.api.Credentials
 import eu.kakde.sonatypecentral.api.OkHttpSonatypeCentralClient
 import eu.kakde.sonatypecentral.api.PublishingType
@@ -83,105 +83,98 @@ abstract class SignMavenArtifact
         }
     }
 
-abstract class AggregateFiles : DefaultTask() {
-    init {
-        this.dependsOn("signMavenArtifacts")
+abstract class AggregateFiles
+    @Inject
+    constructor(
+        @Internal val layout: BundleLayout,
+    ) : DefaultTask() {
+        init {
+            this.dependsOn("signMavenArtifacts")
 
-        group = CUSTOM_TASK_GROUP
-        description = "Aggregate all files to a temporary directory."
-    }
+            group = CUSTOM_TASK_GROUP
+            description = "Aggregate all files to a temporary directory."
+        }
 
-    @Internal
-    var directoryPath: String = ""
+        @TaskAction
+        fun action() {
+            println("Executing AggregateFiles")
 
-    @Internal
-    var groupId: String = project.group.toString()
+            val artifactId = layout.coordinates.artifactId
+            val version = layout.coordinates.version
+            val filesToAggregate = mutableListOf<File>()
+            val buildDirectory = project.layout.buildDirectory
 
-    @Internal
-    var artifactId: String = project.name
+            // Add all files from the libs directory
+            val libsDir = buildDirectory.dir("libs").get().asFileTree
+            // Todo: improve this code. Remove generation of plain jar file in publication.
+            val filesToAdd =
+                libsDir.files.filter { file ->
+                    !file.name.endsWith("-plain.jar") && !file.name.endsWith("-plain.jar.asc")
+                }
+            filesToAggregate.addAll(filesToAdd)
 
-    @Internal
-    var version: String = project.version.toString()
-
-    @TaskAction
-    fun action() {
-        println("Executing AggregateFiles")
-
-        val filesToAggregate = mutableListOf<File>()
-        val buildDirectory = project.layout.buildDirectory
-
-        // Add all files from the libs directory
-        val libsDir = buildDirectory.dir("libs").get().asFileTree
-        // Todo: improve this code. Remove generation of plain jar file in publication.
-        val filesToAdd =
-            libsDir.files.filter { file ->
-                !file.name.endsWith("-plain.jar") && !file.name.endsWith("-plain.jar.asc")
+            // Rename and Add all files from the publications/maven directory, e.g. pom-default.xml and pom-default.xml.asc
+            val mavenPublicationsDir = buildDirectory.dir("publications/maven").orNull
+            mavenPublicationsDir?.asFileTree?.forEach { file: File ->
+                val newName =
+                    when {
+                        file.name == "pom-default.xml" -> "$artifactId-$version.pom"
+                        file.name == "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
+                        file.name == "module.json" -> "$artifactId-$version.module"
+                        file.name == "module.json.asc" -> "$artifactId-$version.module.asc"
+                        else -> "$artifactId-$version.${file.name}"
+                    }
+                filesToAggregate.add(renameFile(file, newName))
             }
-        filesToAggregate.addAll(filesToAdd)
 
-        // Rename and Add all files from the publications/maven directory, e.g. pom-default.xml and pom-default.xml.asc
-        val mavenPublicationsDir = buildDirectory.dir("publications/maven").orNull
-        mavenPublicationsDir?.asFileTree?.forEach { file: File ->
-            val newName =
-                when {
-                    file.name == "pom-default.xml" -> "$artifactId-$version.pom"
-                    file.name == "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
-                    file.name == "module.json" -> "$artifactId-$version.module"
-                    file.name == "module.json.asc" -> "$artifactId-$version.module.asc"
-                    else -> "$artifactId-$version.${file.name}"
-                }
-            filesToAggregate.add(renameFile(file, newName))
+            val versionCatalogDir = buildDirectory.dir("version-catalog").orNull
+            versionCatalogDir?.asFileTree?.forEach { file ->
+
+                val fileName = file.name
+                val newName =
+                    when {
+                        fileName.endsWith("versions.toml") -> "$artifactId-$version.toml"
+                        fileName.endsWith("versions.toml.asc") -> "$artifactId-$version.toml.asc"
+                        else -> fileName
+                    }
+
+                filesToAggregate.add(renameFile(file, newName))
+            }
+
+            val tempDirFile = createStagingDirectory(layout.stagingDirectory)
+            filesToAggregate.forEach { file ->
+                file.copyTo(tempDirFile.resolve(file.name), overwrite = true)
+            }
         }
 
-        val versionCatalogDir = buildDirectory.dir("version-catalog").orNull
-        versionCatalogDir?.asFileTree?.forEach { file ->
-
-            val fileName = file.name
-            val newName =
-                when {
-                    fileName.endsWith("versions.toml") -> "$artifactId-$version.toml"
-                    fileName.endsWith("versions.toml.asc") -> "$artifactId-$version.toml.asc"
-                    else -> fileName
-                }
-
-            filesToAggregate.add(renameFile(file, newName))
+        private fun createStagingDirectory(directory: File): File {
+            directory.mkdirs()
+            // Windows file systems do not expose the POSIX attribute view; skip there. (#4)
+            if (directory.toPath().fileSystem.supportedFileAttributeViews().contains("posix")) {
+                Files.setPosixFilePermissions(
+                    directory.toPath(),
+                    PosixFilePermissions.fromString("rwxrwxrwx"),
+                )
+            }
+            return directory
         }
 
-        val tempDirFile = createStagingDirectory(directoryPath)
-        filesToAggregate.forEach { file ->
-            file.copyTo(tempDirFile.resolve(file.name), overwrite = true)
+        private fun renameFile(
+            oldFile: File,
+            newFileName: String,
+        ): File {
+            require(oldFile.exists()) { "File does not exist: ${oldFile.absolutePath}" }
+            val parentDir = checkNotNull(oldFile.parentFile) { "Parent directory is null" }
+            val newFile = File(parentDir, newFileName)
+            check(oldFile.renameTo(newFile)) { "Failed to rename file: ${oldFile.absolutePath}" }
+            return newFile
         }
     }
-
-    private fun createStagingDirectory(path: String): File {
-        val directory = File(path)
-        directory.mkdirs()
-        // Windows file systems do not expose the POSIX attribute view; skip there. (#4)
-        if (directory.toPath().fileSystem.supportedFileAttributeViews().contains("posix")) {
-            Files.setPosixFilePermissions(
-                directory.toPath(),
-                PosixFilePermissions.fromString("rwxrwxrwx"),
-            )
-        }
-        return directory
-    }
-
-    private fun renameFile(
-        oldFile: File,
-        newFileName: String,
-    ): File {
-        require(oldFile.exists()) { "File does not exist: ${oldFile.absolutePath}" }
-        val parentDir = checkNotNull(oldFile.parentFile) { "Parent directory is null" }
-        val newFile = File(parentDir, newFileName)
-        check(oldFile.renameTo(newFile)) { "Failed to rename file: ${oldFile.absolutePath}" }
-        return newFile
-    }
-}
 
 abstract class ComputeHash
     @Inject
     constructor(
-        @Internal val directory: File,
+        @Internal val layout: BundleLayout,
         @Internal val shaAlgorithms: List<String>,
     ) : DefaultTask() {
         init {
@@ -199,6 +192,7 @@ abstract class ComputeHash
             val effectiveAlgorithms =
                 (listOf(MessageDigestAlgorithm.MD5, MessageDigestAlgorithm.SHA_1) + shaAlgorithms).toSet()
             println("Hash algorithms used: $effectiveAlgorithms")
+            val directory = layout.stagingDirectory
             directory.listFiles { _, name -> !name.endsWith(".asc") }?.forEach { file ->
                 effectiveAlgorithms.forEach { algorithm ->
                     val digest = MessageDigest.getInstance(algorithm)
@@ -213,59 +207,51 @@ abstract class ComputeHash
             algorithm.replace("-", "").lowercase(Locale.ROOT)
     }
 
-abstract class CreateZip : DefaultTask() {
-    init {
-        group = CUSTOM_TASK_GROUP
-        description = "Create a zip file comprising all files located within a temporary directory."
-        this.dependsOn("computeHash")
-    }
+abstract class CreateZip
+    @Inject
+    constructor(
+        @Internal val layout: BundleLayout,
+    ) : DefaultTask() {
+        init {
+            group = CUSTOM_TASK_GROUP
+            description = "Create a zip file comprising all files located within a temporary directory."
+            this.dependsOn("computeHash")
+        }
 
-    // Folder path to be archived
-    @Internal
-    var folderPath: String? = ""
-
-    @TaskAction
-    fun createArchive() {
-        println("Executing 'createZip' task...")
-        println("Creating zip file from the folder: $folderPath ")
-        folderPath?.let {
-            ZipUtils.prepareZipFile(
-                it,
-                project.layout.buildDirectory.get().asFile.resolve("upload.zip").path,
-            )
+        @TaskAction
+        fun createArchive() {
+            println("Executing 'createZip' task...")
+            println("Creating zip file from the folder: ${layout.uploadRootDirectory.path}")
+            ZipUtils.prepareZipFile(layout.uploadRootDirectory.path, layout.zipFile.path)
         }
     }
-}
 
-abstract class PublishToSonatypeCentral : DefaultTask() {
-    init {
-        group = CUSTOM_TASK_GROUP
-        description = "Publish to New Sonatype Maven Central Repository."
-        this.dependsOn("createZip")
+abstract class PublishToSonatypeCentral
+    @Inject
+    constructor(
+        @Internal val layout: BundleLayout,
+    ) : DefaultTask() {
+        init {
+            group = CUSTOM_TASK_GROUP
+            description = "Publish to New Sonatype Maven Central Repository."
+            this.dependsOn("createZip")
+        }
+
+        private val extension = project.extensions.getByType(SonatypeCentralPublishExtension::class.java)
+
+        @Internal
+        var client: SonatypeCentralClient? = null
+
+        @TaskAction
+        fun uploadZip() {
+            logger.lifecycle("Executing 'publishToSonatypeCentral' task...")
+            val effectiveClient = client ?: defaultClient(extension)
+            val publishingType = PublishingType.valueOf(extension.publishingType.get().uppercase(Locale.ROOT))
+
+            val deploymentId = effectiveClient.upload(layout.zipFile, layout.coordinates, publishingType)
+            logger.lifecycle("Published to Maven Central. Deployment ID: ${deploymentId.value}")
+        }
     }
-
-    private val extension = project.extensions.getByType(SonatypeCentralPublishExtension::class.java)
-    private val zipFileProvider = project.layout.buildDirectory.file("upload.zip")
-
-    @Internal
-    var client: SonatypeCentralClient? = null
-
-    @TaskAction
-    fun uploadZip() {
-        logger.lifecycle("Executing 'publishToSonatypeCentral' task...")
-        val effectiveClient = client ?: defaultClient(extension)
-        val coordinates =
-            ArtifactCoordinates(
-                groupId = extension.groupId.get(),
-                artifactId = extension.artifactId.get(),
-                version = extension.version.get(),
-            )
-        val publishingType = PublishingType.valueOf(extension.publishingType.get().uppercase(Locale.ROOT))
-
-        val deploymentId = effectiveClient.upload(zipFileProvider.get().asFile, coordinates, publishingType)
-        logger.lifecycle("Published to Maven Central. Deployment ID: ${deploymentId.value}")
-    }
-}
 
 abstract class GetDeploymentStatus : DefaultTask() {
     init {
