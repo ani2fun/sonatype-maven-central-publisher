@@ -128,7 +128,7 @@ abstract class AggregateFiles : DefaultTask() {
                     file.name == "module.json.asc" -> "$artifactId-$version.module.asc"
                     else -> "$artifactId-$version.${file.name}"
                 }
-            filesToAggregate.addLast(renameFile(file, newName))
+            filesToAggregate.add(renameFile(file, newName))
         }
 
         val versionCatalogDir = buildDirectory.dir("version-catalog").orNull
@@ -142,7 +142,7 @@ abstract class AggregateFiles : DefaultTask() {
                     else -> fileName
                 }
 
-            filesToAggregate.addLast(renameFile(file, newName))
+            filesToAggregate.add(renameFile(file, newName))
         }
 
         val tempDirFile = createDirectoryStructure(directoryPath)
