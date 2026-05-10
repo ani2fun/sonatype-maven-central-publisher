@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.okio)
     implementation(libs.okhttp)
     implementation(libs.okhttpLoggingInterceptor)
+    testImplementation(libs.okhttpMockwebserver)
 }
 
 testing {
