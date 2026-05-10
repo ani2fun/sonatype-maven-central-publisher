@@ -9,8 +9,11 @@ object IOUtils {
         println("Creating Directory structure under: $directoryPath")
         val directory = File(directoryPath)
         directory.mkdirs()
-        val permissions = PosixFilePermissions.fromString("rwxrwxrwx")
-        Files.setPosixFilePermissions(directory.toPath(), permissions)
+        // Windows file systems do not support POSIX attributes; skip there.
+        if (directory.toPath().fileSystem.supportedFileAttributeViews().contains("posix")) {
+            val permissions = PosixFilePermissions.fromString("rwxrwxrwx")
+            Files.setPosixFilePermissions(directory.toPath(), permissions)
+        }
         return directory
     }
 
