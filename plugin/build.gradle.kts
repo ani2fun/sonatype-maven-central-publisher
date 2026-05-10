@@ -21,6 +21,9 @@ repositories {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)
+        // Restrict the Java API surface to JDK 8 so post-8 methods (e.g. List.addLast)
+        // fail at compile time instead of NoSuchMethodError on consumer JVMs.
+        freeCompilerArgs.add("-Xjdk-release=1.8")
     }
 }
 
