@@ -30,6 +30,11 @@ kotlin {
 java {
     withJavadocJar()
     withSourcesJar()
+    // Both source and target are pinned to 1.8 so the published Gradle metadata
+    // advertises org.gradle.jvm.version=8. This lets consumers running JDK 8+
+    // (Android projects on JDK 17, library projects on JDK 11/17/21, …) resolve
+    // the plugin without "no matching variant" errors.
+    sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
