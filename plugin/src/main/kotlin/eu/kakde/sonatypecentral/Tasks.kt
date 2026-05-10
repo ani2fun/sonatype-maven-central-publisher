@@ -7,8 +7,6 @@ import eu.kakde.sonatypecentral.api.OkHttpSonatypeCentralClient
 import eu.kakde.sonatypecentral.api.PublishingType
 import eu.kakde.sonatypecentral.api.SonatypeCentralClient
 import eu.kakde.sonatypecentral.utils.HashComputation
-import eu.kakde.sonatypecentral.utils.IOUtils.createDirectoryStructure
-import eu.kakde.sonatypecentral.utils.IOUtils.renameFile
 import eu.kakde.sonatypecentral.utils.ZipUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.maven.MavenPublication
@@ -18,6 +16,8 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.plugins.signing.SigningExtension
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.Locale
 import javax.inject.Inject
 
@@ -145,12 +145,34 @@ abstract class AggregateFiles : DefaultTask() {
             filesToAggregate.add(renameFile(file, newName))
         }
 
-        val tempDirFile = createDirectoryStructure(directoryPath)
+        val tempDirFile = createStagingDirectory(directoryPath)
         filesToAggregate.forEach { file ->
-            tempDirFile.let {
-                file.copyTo(it.resolve(file.name), overwrite = true)
-            }
+            file.copyTo(tempDirFile.resolve(file.name), overwrite = true)
         }
+    }
+
+    private fun createStagingDirectory(path: String): File {
+        val directory = File(path)
+        directory.mkdirs()
+        // Windows file systems do not expose the POSIX attribute view; skip there. (#4)
+        if (directory.toPath().fileSystem.supportedFileAttributeViews().contains("posix")) {
+            Files.setPosixFilePermissions(
+                directory.toPath(),
+                PosixFilePermissions.fromString("rwxrwxrwx"),
+            )
+        }
+        return directory
+    }
+
+    private fun renameFile(
+        oldFile: File,
+        newFileName: String,
+    ): File {
+        require(oldFile.exists()) { "File does not exist: ${oldFile.absolutePath}" }
+        val parentDir = checkNotNull(oldFile.parentFile) { "Parent directory is null" }
+        val newFile = File(parentDir, newFileName)
+        check(oldFile.renameTo(newFile)) { "Failed to rename file: ${oldFile.absolutePath}" }
+        return newFile
     }
 }
 
