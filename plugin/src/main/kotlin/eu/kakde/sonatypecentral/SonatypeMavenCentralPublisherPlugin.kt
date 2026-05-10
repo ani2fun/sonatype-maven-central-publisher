@@ -59,9 +59,12 @@ private fun execution(
         val shaAlgorithms = extension.shaAlgorithms.get()
         println("Configuring details - Group ID: $groupId, Artifact ID: $artifactId, Version: $version, Component Type: $componentType")
 
-        // In-built plugin call to get javadoc and sources
-        javaPluginExtension.withSourcesJar()
-        javaPluginExtension.withJavadocJar()
+        // In-built plugin call to get javadoc and sources. Skip if another plugin
+        // (e.g. kotlin-jvm) already registered a task with the same name —
+        // calling withSourcesJar()/withJavadocJar() in that case throws
+        // InvalidUserDataException about a Jar type mismatch.
+        if (project.tasks.findByName("sourcesJar") == null) javaPluginExtension.withSourcesJar()
+        if (project.tasks.findByName("javadocJar") == null) javaPluginExtension.withJavadocJar()
 
         // Prepare Maven Publication
         val mavenPublication = prepareMavenPublication(extension, publicationContainer, project)
@@ -140,8 +143,8 @@ private fun prepareMavenPublication(
             publication.artifactId = artifactId
             publication.version = version
 
-            customExtension.pomConfiguration.let {
-                publication.pom(it.get())
+            customExtension.pomConfiguration.orNull?.let { action ->
+                publication.pom(action)
             }
 
             customExtension.versionMappingStrategy?.let {

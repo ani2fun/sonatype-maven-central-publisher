@@ -1,8 +1,10 @@
 package eu.kakde.sonatypecentral
 
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.testfixtures.ProjectBuilder
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 /**
  * A simple unit test for the 'eu.kakde.gradle.sonatype-maven-central-publisher' plugin.
@@ -34,5 +36,29 @@ class SonatypeMavenCentralPublisherPluginTest {
         assertEquals("java", ext.componentType.get())
         assertEquals("USER_MANAGED", ext.publishingType.get())
         assertEquals(emptyList(), ext.shaAlgorithms.get())
+    }
+
+    @Test fun `applying plugin succeeds when sourcesJar already exists`() {
+        // Regression test for #5: another plugin (e.g. kotlin-jvm) may have
+        // already registered a `sourcesJar` task of type org.gradle.jvm.tasks.Jar
+        // before our plugin is applied. The previous code unconditionally called
+        // javaPluginExtension.withSourcesJar(), which threw
+        //   InvalidUserDataException: The task 'sourcesJar' (org.gradle.jvm.tasks.Jar)
+        //   is not a subclass of the given type (org.gradle.api.tasks.bundling.Jar).
+        // Now we guard the call.
+        val project = ProjectBuilder.builder().withName("test").build()
+        project.group = "com.example"
+        project.version = "1.0"
+
+        // Simulate another plugin's pre-existing legacy-typed jars.
+        project.tasks.register("sourcesJar", org.gradle.jvm.tasks.Jar::class.java)
+        project.tasks.register("javadocJar", org.gradle.jvm.tasks.Jar::class.java)
+
+        project.plugins.apply("eu.kakde.gradle.sonatype-maven-central-publisher")
+        (project as ProjectInternal).evaluate()
+
+        // No exception thrown means the guard kicked in. The pre-existing tasks remain.
+        assertNotNull(project.tasks.findByName("sourcesJar"))
+        assertNotNull(project.tasks.findByName("javadocJar"))
     }
 }
