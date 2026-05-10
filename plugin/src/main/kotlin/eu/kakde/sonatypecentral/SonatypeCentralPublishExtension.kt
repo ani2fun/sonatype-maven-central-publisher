@@ -36,7 +36,15 @@ open class SonatypeCentralPublishExtension
         }
 
         companion object {
-            internal fun Project.toSonatypeExtension(): SonatypeCentralPublishExtension =
-                extensions.create("sonatypeCentralPublishExtension", SonatypeCentralPublishExtension::class.java)
+            internal fun Project.toSonatypeExtension(): SonatypeCentralPublishExtension {
+                val ext = extensions.create("sonatypeCentralPublishExtension", SonatypeCentralPublishExtension::class.java)
+                ext.groupId.convention(provider { group.toString() })
+                ext.artifactId.convention(provider { name })
+                ext.version.convention(provider { version.toString() })
+                ext.componentType.convention("java")
+                ext.publishingType.convention("USER_MANAGED")
+                ext.shaAlgorithms.convention(emptyList())
+                return ext
+            }
         }
     }
