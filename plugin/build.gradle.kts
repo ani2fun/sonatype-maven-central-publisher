@@ -2,11 +2,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.jvm)
+    alias(libs.plugins.pluginPublish)
     `java-gradle-plugin`
     `maven-publish`
     `version-catalog`
     signing
-    id("com.gradle.plugin-publish") version "1.2.1"
 }
 
 group = "eu.kakde.gradle"
