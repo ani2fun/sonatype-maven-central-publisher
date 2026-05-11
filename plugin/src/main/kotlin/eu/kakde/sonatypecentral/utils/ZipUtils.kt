@@ -1,5 +1,6 @@
 package eu.kakde.sonatypecentral.utils
 
+import org.gradle.api.GradleException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -7,6 +8,18 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 object ZipUtils {
+    /**
+     * Archive [folderPath] into [zipFilePath].
+     *
+     * Throws [GradleException] if the source folder is missing or is not a
+     * directory — previously this was silently swallowed (returned with a
+     * println), which caused a downstream `publishToSonatype` to upload a
+     * stale or missing zip without any signal that an earlier step failed.
+     *
+     * Overwrites [zipFilePath] if it already exists, so re-running
+     * `createZip` after a partial failure produces a fresh archive. This is
+     * the Gradle convention for ZIP-producing tasks.
+     */
     fun prepareZipFile(
         folderPath: String,
         zipFilePath: String,
@@ -14,14 +27,14 @@ object ZipUtils {
         val sourceFolder = File(folderPath)
         val zipFile = File(zipFilePath)
 
-        if (!sourceFolder.exists()) {
-            println("Source folder does not exist.")
-            return
+        if (!sourceFolder.exists() || !sourceFolder.isDirectory) {
+            throw GradleException(
+                "Cannot create zip: source folder does not exist or is not a directory: ${sourceFolder.absolutePath}",
+            )
         }
 
-        if (zipFile.exists()) {
-            println("Zip file already exists. Please provide a different path.")
-            return
+        if (zipFile.exists() && !zipFile.delete()) {
+            throw GradleException("Cannot replace existing zip file: ${zipFile.absolutePath}")
         }
 
         ZipOutputStream(FileOutputStream(zipFile)).use { zipOut ->
