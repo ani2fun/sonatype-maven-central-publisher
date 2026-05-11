@@ -3,11 +3,11 @@ package eu.kakde.sonatypecentral
 import com.google.gson.GsonBuilder
 import eu.kakde.sonatypecentral.api.BundleLayout
 import eu.kakde.sonatypecentral.api.Credentials
+import eu.kakde.sonatypecentral.api.HashAlgorithm
 import eu.kakde.sonatypecentral.api.OkHttpSonatypeCentralClient
 import eu.kakde.sonatypecentral.api.PublishingType
 import eu.kakde.sonatypecentral.api.SonatypeCentralClient
 import eu.kakde.sonatypecentral.utils.HashUtils
-import eu.kakde.sonatypecentral.utils.MessageDigestAlgorithm
 import eu.kakde.sonatypecentral.utils.ZipUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.maven.MavenPublication
@@ -151,24 +151,23 @@ abstract class ComputeHash
         fun run() {
             println("Executing 'computeHash' Task...")
             // Maven Central requires MD5 + SHA-1 alongside any user-requested
-            // algorithms. Deduplicate so a user who already lists SHA-1 doesn't
-            // produce two .sha1 files.
+            // algorithms. Parse user strings here so an invalid algorithm name
+            // fails the build at action time with a clear, listed error instead
+            // of cryptic NoSuchAlgorithmException deep inside the hash loop.
             val effectiveAlgorithms =
-                (listOf(MessageDigestAlgorithm.MD5, MessageDigestAlgorithm.SHA_1) + shaAlgorithms).toSet()
-            println("Hash algorithms used: $effectiveAlgorithms")
+                (listOf(HashAlgorithm.MD5, HashAlgorithm.SHA_1) + shaAlgorithms.map { HashAlgorithm.fromJavaName(it) })
+                    .toSet()
+            println("Hash algorithms used: ${effectiveAlgorithms.map { it.javaName }}")
             val directory = layout.stagingDirectory
             directory.listFiles { _, name -> !name.endsWith(".asc") }?.forEach { file ->
                 effectiveAlgorithms.forEach { algorithm ->
-                    val digest = MessageDigest.getInstance(algorithm)
+                    val digest = MessageDigest.getInstance(algorithm.javaName)
                     val checksum = HashUtils.getCheckSumFromFile(digest, file)
-                    val checksumFile = File(directory, "${file.name}.${fileSuffixFor(algorithm)}")
+                    val checksumFile = File(directory, "${file.name}.${algorithm.fileSuffix}")
                     checksumFile.writeText(checksum)
                 }
             }
         }
-
-        private fun fileSuffixFor(algorithm: String): String =
-            algorithm.replace("-", "").lowercase(Locale.ROOT)
     }
 
 abstract class CreateZip
