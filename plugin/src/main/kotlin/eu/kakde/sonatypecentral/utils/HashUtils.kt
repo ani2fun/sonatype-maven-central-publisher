@@ -13,21 +13,6 @@ object HashUtils {
     const val STREAM_BUFFER_LENGTH = 1024
 
     /**
-     * Computes the checksum (hash value) of a file given its path.
-     *
-     * @param digest The MessageDigest algorithm to use (e.g. MD5)
-     * @param filePath The path to the file
-     * @return The checksum as a hexadecimal string
-     */
-    fun getCheckSumFromFile(
-        digest: MessageDigest,
-        filePath: String,
-    ): String {
-        val file = File(filePath)
-        return getCheckSumFromFile(digest, file)
-    }
-
-    /**
      * Computes the checksum (hash value) of a file.
      *
      * @param digest The MessageDigest algorithm to use (e.g. MD5)
