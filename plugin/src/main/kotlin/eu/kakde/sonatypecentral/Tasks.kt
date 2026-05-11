@@ -1,7 +1,9 @@
 package eu.kakde.sonatypecentral
 
 import com.google.gson.GsonBuilder
+import eu.kakde.sonatypecentral.api.BundleComposition
 import eu.kakde.sonatypecentral.api.BundleLayout
+import eu.kakde.sonatypecentral.api.NamedFile
 import eu.kakde.sonatypecentral.api.Credentials
 import eu.kakde.sonatypecentral.api.HashAlgorithm
 import eu.kakde.sonatypecentral.api.OkHttpSonatypeCentralClient
@@ -63,51 +65,24 @@ abstract class AggregateFiles
         fun action() {
             println("Executing AggregateFiles")
 
-            val artifactId = layout.coordinates.artifactId
-            val version = layout.coordinates.version
-            val filesToAggregate = mutableListOf<File>()
             val buildDirectory = project.layout.buildDirectory
+            val staged = mutableListOf<NamedFile>()
 
-            // Add all files from the libs directory
-            val libsDir = buildDirectory.dir("libs").get().asFileTree
-            // Todo: improve this code. Remove generation of plain jar file in publication.
-            val filesToAdd =
-                libsDir.files.filter { file ->
-                    !file.name.endsWith("-plain.jar") && !file.name.endsWith("-plain.jar.asc")
-                }
-            filesToAggregate.addAll(filesToAdd)
-
-            // Rename and Add all files from the publications/maven directory, e.g. pom-default.xml and pom-default.xml.asc
-            val mavenPublicationsDir = buildDirectory.dir("publications/maven").orNull
-            mavenPublicationsDir?.asFileTree?.forEach { file: File ->
-                val newName =
-                    when {
-                        file.name == "pom-default.xml" -> "$artifactId-$version.pom"
-                        file.name == "pom-default.xml.asc" -> "$artifactId-$version.pom.asc"
-                        file.name == "module.json" -> "$artifactId-$version.module"
-                        file.name == "module.json.asc" -> "$artifactId-$version.module.asc"
-                        else -> "$artifactId-$version.${file.name}"
-                    }
-                filesToAggregate.add(renameFile(file, newName))
+            // Discovery: which Gradle output directories have files? Composition:
+            // what should those files be called in the bundle?
+            buildDirectory.dir("libs").orNull?.asFileTree?.files?.let { files ->
+                staged += BundleComposition.fromLibs(files)
+            }
+            buildDirectory.dir("publications/maven").orNull?.asFileTree?.files?.let { files ->
+                staged += BundleComposition.fromPublicationsMaven(files, layout.coordinates)
+            }
+            buildDirectory.dir("version-catalog").orNull?.asFileTree?.files?.let { files ->
+                staged += BundleComposition.fromVersionCatalog(files, layout.coordinates)
             }
 
-            val versionCatalogDir = buildDirectory.dir("version-catalog").orNull
-            versionCatalogDir?.asFileTree?.forEach { file ->
-
-                val fileName = file.name
-                val newName =
-                    when {
-                        fileName.endsWith("versions.toml") -> "$artifactId-$version.toml"
-                        fileName.endsWith("versions.toml.asc") -> "$artifactId-$version.toml.asc"
-                        else -> fileName
-                    }
-
-                filesToAggregate.add(renameFile(file, newName))
-            }
-
-            val tempDirFile = createStagingDirectory(layout.stagingDirectory)
-            filesToAggregate.forEach { file ->
-                file.copyTo(tempDirFile.resolve(file.name), overwrite = true)
+            val stagingDir = createStagingDirectory(layout.stagingDirectory)
+            staged.forEach { (source, targetName) ->
+                source.copyTo(stagingDir.resolve(targetName), overwrite = true)
             }
         }
 
@@ -121,17 +96,6 @@ abstract class AggregateFiles
                 )
             }
             return directory
-        }
-
-        private fun renameFile(
-            oldFile: File,
-            newFileName: String,
-        ): File {
-            require(oldFile.exists()) { "File does not exist: ${oldFile.absolutePath}" }
-            val parentDir = checkNotNull(oldFile.parentFile) { "Parent directory is null" }
-            val newFile = File(parentDir, newFileName)
-            check(oldFile.renameTo(newFile)) { "Failed to rename file: ${oldFile.absolutePath}" }
-            return newFile
         }
     }
 
