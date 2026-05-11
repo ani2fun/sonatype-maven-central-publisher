@@ -13,6 +13,19 @@ Maven Central repository. Currently, it supports publishing Java Libraries, Grad
 > or Gradle engineers.
 > This project presents a valuable opportunity to learn Gradle plugin development
 
+**1.1.0 highlights** (see [CHANGELOG.md](CHANGELOG.md) for the full list):
+
+- The DSL block is now optional — `groupId`, `artifactId`, `version`,
+  `componentType`, `publishingType`, and `shaAlgorithms` all have sensible
+  defaults derived from the surrounding Gradle project. Credentials remain
+  the only mandatory fields.
+- `publishToSonatype` now **fails the Gradle build** on a non-2xx HTTP
+  response from the Sonatype API. Previously the task printed the error
+  and exited 0, causing CI/CD to silently treat failures as successes.
+- Windows support: `aggregateFiles` no longer throws
+  `UnsupportedOperationException` because of POSIX permissions.
+- Five GitHub issues fixed (#1–#5).
+
 Follow these steps to integrate and configure the plugin for your project:
 
 ## 1. Apply the Plugin
@@ -21,7 +34,7 @@ Apply the plugin in your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.0.6"
+    id("eu.kakde.gradle.sonatype-maven-central-publisher") version "1.1.0"
 }
 ```
 
@@ -59,6 +72,13 @@ Add the `sonatypeCentralPublishExtension` to configure the publication:
 
 > [!NOTE]
 > Specify the component type as "java" for publishing Java artifacts (which includes Java libraries or Spring Boot applications), or "versionCatalog" for publishing a version catalog.
+
+> [!TIP]
+> Since 1.1.0, every property except `username`/`password` is optional. If
+> you don't set them, `groupId`/`artifactId`/`version` come from the Gradle
+> project, `componentType` defaults to `"java"`, `publishingType` defaults
+> to `"USER_MANAGED"`, and `shaAlgorithms` defaults to an empty list
+> (MD5 + SHA-1 are always produced because Maven Central requires them).
 
 The sample configuration block in `build.gradle.kts` appears as follows:
 
