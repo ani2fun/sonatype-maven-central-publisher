@@ -23,42 +23,6 @@ import java.security.MessageDigest
 import java.util.Locale
 import javax.inject.Inject
 
-abstract class GenerateMavenArtifacts
-    @Inject
-    constructor(
-        @Internal val componentType: String,
-    ) : DefaultTask() {
-        init {
-            val commonDependencies =
-                arrayOf(
-                    "clean",
-                    "javadocJar",
-                    "sourcesJar",
-                    "generatePomFileForMavenPublication",
-                    "generateMetadataFileForMavenPublication",
-                )
-
-            val additionalDependencies =
-                when {
-                    componentType == "versionCatalog" -> emptyArray()
-                    project.hasProperty("bootJar") -> arrayOf("bootJar")
-                    else -> arrayOf("jar")
-                }
-
-            val dependencies = additionalDependencies + commonDependencies
-
-            this.dependsOn(*dependencies)
-
-            group = CUSTOM_TASK_GROUP
-            description = "Generates all necessary artifacts for maven publication."
-        }
-
-        @TaskAction
-        fun action() {
-            println("Executing 'generateMavenArtifacts' Task...")
-        }
-    }
-
 abstract class SignMavenArtifact
     @Inject
     constructor(

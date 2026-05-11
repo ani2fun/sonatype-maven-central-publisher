@@ -100,7 +100,27 @@ private fun registerTasks(
             coordinates = ArtifactCoordinates(groupId, artifactId, version),
         )
 
-    project.tasks.register("generateMavenArtifacts", GenerateMavenArtifacts::class.java, componentType)
+    // Lifecycle task — a thin dependency aggregator. A dedicated DefaultTask
+    // subclass for this would only add boilerplate; the dependsOn list is the
+    // entire behaviour.
+    val artifactDependencies =
+        buildList {
+            when {
+                componentType == "versionCatalog" -> Unit
+                project.hasProperty("bootJar") -> add("bootJar")
+                else -> add("jar")
+            }
+            add("clean")
+            add("javadocJar")
+            add("sourcesJar")
+            add("generatePomFileForMavenPublication")
+            add("generateMetadataFileForMavenPublication")
+        }
+    project.tasks.register("generateMavenArtifacts") {
+        it.group = CUSTOM_TASK_GROUP
+        it.description = "Generates all necessary artifacts for maven publication."
+        it.dependsOn(*artifactDependencies.toTypedArray())
+    }
     project.tasks.register("signMavenArtifacts", SignMavenArtifact::class.java, mavenPublication)
     project.tasks.register("aggregateFiles", AggregateFiles::class.java, layout)
     project.tasks.register("computeHash", ComputeHash::class.java, layout, shaAlgorithms)
