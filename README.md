@@ -1,3 +1,5 @@
+
+
 # Gradle Plugin for publishing to [central sonatype maven repository](https://central.sonatype.com/)
 
 The Maven Central Publisher Plugin is a Gradle plugin designed to streamline the process of publishing artifacts to
@@ -113,6 +115,7 @@ sonatypeCentralPublishExtension {
     version.set(Meta.VERSION)
     componentType.set(Meta.COMPONENT_TYPE) // "java" or "versionCatalog"
     publishingType.set(Meta.PUBLISHING_TYPE) // USER_MANAGED or AUTOMATIC
+    shaAlgorithms.set(Meta.SHA_ALGORITHMS)
 
     // Set username and password for Sonatype repository
     username.set(System.getenv("SONATYPE_USERNAME") ?: sonatypeUsername)
